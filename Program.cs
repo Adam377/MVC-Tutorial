@@ -1,7 +1,11 @@
+using Microsoft.EntityFrameworkCore;
+using MVC_Tutorial.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddDbContext<MVCTutorialDbContext>(options => options.UseInMemoryDatabase("MVCTutorialDb"));
 
 var app = builder.Build();
 
