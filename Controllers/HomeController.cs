@@ -24,32 +24,9 @@ public class HomeController : Controller
 
     public IActionResult Expenses()
     {
-        string connectionString = "Data Source=(localdb)\\mvclocaldb;Initial Catalog=ExpensesDB";
-
-        string sqlQuery = "SELECT * FROM dbo.Expenses";
-
-        SqlConnection con = new SqlConnection(connectionString);
-
-        con.Open();
-        SqlCommand sc = new SqlCommand(sqlQuery, con);
-
-        List<Expense> allExpenses = new List<Expense>();
-
-        using (SqlDataReader reader = sc.ExecuteReader())
-        {
-            while (reader.Read())
-            {
-                allExpenses.Add(new Expense {
-                    Id = int.Parse(reader["ExpenseID"].ToString()),
-                    Value = decimal.Parse(reader["ExpenseValue"].ToString()),
-                    Description = reader["ExpenseDescription"].ToString()
-                });
-            }
-        }
-
-        con.Close();
-
         decimal totalExpenses = 0;
+        List<Expense> allExpenses = DBConnection.MakeSelectQuery("SELECT * FROM dbo.Expenses");
+
         foreach(Expense e in allExpenses)
         {
             totalExpenses += e.Value;
@@ -66,28 +43,7 @@ public class HomeController : Controller
         {
             try
             {
-                string connectionString = "Data Source=(localdb)\\mvclocaldb;Initial Catalog=ExpensesDB";
-
-                string sqlQuery = $"SELECT * FROM dbo.Expenses WHERE ExpenseID = {id}";
-
-                SqlConnection con = new SqlConnection(connectionString);
-
-                con.Open();
-                SqlCommand sc = new SqlCommand(sqlQuery, con);
-
-                Expense expense = new Expense();
-
-                using (SqlDataReader reader = sc.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        expense.Id = int.Parse(reader["ExpenseID"].ToString());
-                        expense.Value = decimal.Parse(reader["ExpenseValue"].ToString());
-                        expense.Description = reader["ExpenseDescription"].ToString();
-                    }
-                }
-
-                con.Close();
+                Expense expense = DBConnection.MakeSelectQuery($"SELECT * FROM dbo.Expenses WHERE ExpenseID = {id}")[0];
 
                 return View(expense);
             }
@@ -104,16 +60,7 @@ public class HomeController : Controller
     {
         try
         {
-            string connectionString = "Data Source=(localdb)\\mvclocaldb;Initial Catalog=ExpensesDB";
-
-            string sqlQuery = $"DELETE FROM dbo.Expenses WHERE ExpenseID = {id}";
-
-            SqlConnection con = new SqlConnection(connectionString);
-
-            con.Open();
-            SqlCommand sc = new SqlCommand(sqlQuery, con);
-            sc.ExecuteNonQuery();
-            con.Close();
+            DBConnection.MakeDeleteInsertUpdateQuery($"DELETE FROM dbo.Expenses WHERE ExpenseID = {id}");
         }
         catch
         {
@@ -128,16 +75,7 @@ public class HomeController : Controller
         if (model.Id != 0) {
             try
             {
-                string connectionString = "Data Source=(localdb)\\mvclocaldb;Initial Catalog=ExpensesDB";
-
-                string sqlQuery = $"UPDATE dbo.Expenses SET ExpenseValue = '{model.Value}', ExpenseDescription = '{model.Description}' WHERE ExpenseID = {model.Id}";
-
-                SqlConnection con = new SqlConnection(connectionString);
-
-                con.Open();
-                SqlCommand sc = new SqlCommand(sqlQuery, con);
-                sc.ExecuteNonQuery();
-                con.Close();
+                DBConnection.MakeDeleteInsertUpdateQuery($"UPDATE dbo.Expenses SET ExpenseValue = '{model.Value}', ExpenseDescription = '{model.Description}' WHERE ExpenseID = {model.Id}");
 
                 return RedirectToAction("Expenses");
             }
@@ -150,16 +88,7 @@ public class HomeController : Controller
         {
             try
             {
-                string connectionString = "Data Source=(localdb)\\mvclocaldb;Initial Catalog=ExpensesDB";
-
-                string sqlQuery = $"INSERT INTO dbo.Expenses (ExpenseValue, ExpenseDescription) VALUES ('{model.Value}', '{model.Description}')";
-
-                SqlConnection con = new SqlConnection(connectionString);
-
-                con.Open();
-                SqlCommand sc = new SqlCommand(sqlQuery, con);
-                sc.ExecuteNonQuery();
-                con.Close();
+                DBConnection.MakeDeleteInsertUpdateQuery($"INSERT INTO dbo.Expenses (ExpenseValue, ExpenseDescription) VALUES ('{model.Value}', '{model.Description}')");
 
                 return RedirectToAction("Expenses");
             }
