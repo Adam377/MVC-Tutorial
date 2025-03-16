@@ -102,9 +102,23 @@ public class HomeController : Controller
 
     public IActionResult DeleteExpense(int id)
     {
-        var expenseInDb = _context.Expenses.SingleOrDefault(expense => expense.Id == id);
-        _context.Expenses.Remove(expenseInDb);
-        _context.SaveChanges();
+        try
+        {
+            string connectionString = "Data Source=(localdb)\\mvclocaldb;Initial Catalog=ExpensesDB";
+
+            string sqlQuery = $"DELETE FROM dbo.Expenses WHERE ExpenseID = {id}";
+
+            SqlConnection con = new SqlConnection(connectionString);
+
+            con.Open();
+            SqlCommand sc = new SqlCommand(sqlQuery, con);
+            sc.ExecuteNonQuery();
+            con.Close();
+        }
+        catch
+        {
+            return RedirectToAction("Error");
+        }
 
         return RedirectToAction("Expenses");
     }
