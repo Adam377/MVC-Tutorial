@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using MVC_Tutorial.Models;
 
@@ -23,10 +24,30 @@ public class HomeController : Controller
 
     public IActionResult Expenses()
     {
-        var allExpenses = _context.Expenses.ToList();
-        var totalExpenses = allExpenses.Sum(x => x.Value);
+        string connectionString = "Data Source=(localdb)\\mvclocaldb;Initial Catalog=ExpensesDB";
 
-        ViewBag.Expenses = totalExpenses;
+        string sqlQuery = "SELECT * FROM dbo.Expenses";
+
+        SqlConnection con = new SqlConnection(connectionString);
+
+        con.Open();
+        SqlCommand sc = new SqlCommand(sqlQuery, con);
+
+        List<Expense> allExpenses = new List<Expense>();
+
+        using (SqlDataReader reader = sc.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                allExpenses.Add(new Expense {
+                    Id = int.Parse(reader["ExpenseID"].ToString()),
+                    Value = decimal.Parse(reader["ExpenseValue"].ToString()),
+                    Description = reader["ExpenseDescription"].ToString()
+                });
+            }
+        }
+
+        con.Close();
 
         return View(allExpenses);
     }
@@ -54,20 +75,25 @@ public class HomeController : Controller
 
     public IActionResult CreateEditExpenseForm(Expense model)
     {
-        if(model.Id == 0)
+        try
         {
-            // creating something
-            _context.Expenses.Add(model);
+            string connectionString = "Data Source=(localdb)\\mvclocaldb;Initial Catalog=ExpensesDB";
+
+            string sqlQuery = "INSERT INTO dbo.Expenses (ExpenseValue, ExpenseDescription) VALUES (" + "'" + model.Value + "','" + model.Description + "'" + ")";
+
+            SqlConnection con = new SqlConnection(connectionString);
+
+            con.Open();
+            SqlCommand sc = new SqlCommand(sqlQuery, con);
+            sc.ExecuteNonQuery();
+            con.Close();
+
+            return RedirectToAction("Expenses");
         }
-        else
+        catch
         {
-            // editing
-            _context.Expenses.Update(model);
+            return RedirectToAction("Error");
         }
-
-        _context.SaveChanges();
-
-        return RedirectToAction("Expenses");
     }
 
     public IActionResult Privacy()
