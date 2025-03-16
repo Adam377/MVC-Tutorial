@@ -64,9 +64,37 @@ public class HomeController : Controller
     {
         if(id != null)
         {
-            // editing -> load an expense by id
-            var expenseInDb = _context.Expenses.SingleOrDefault(expense => expense.Id == id);
-            return View(expenseInDb);
+            try
+            {
+                string connectionString = "Data Source=(localdb)\\mvclocaldb;Initial Catalog=ExpensesDB";
+
+                string sqlQuery = $"SELECT * FROM dbo.Expenses WHERE ExpenseID = {id}";
+
+                SqlConnection con = new SqlConnection(connectionString);
+
+                con.Open();
+                SqlCommand sc = new SqlCommand(sqlQuery, con);
+
+                Expense expense = new Expense();
+
+                using (SqlDataReader reader = sc.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        expense.Id = int.Parse(reader["ExpenseID"].ToString());
+                        expense.Value = decimal.Parse(reader["ExpenseValue"].ToString());
+                        expense.Description = reader["ExpenseDescription"].ToString();
+                    }
+                }
+
+                con.Close();
+
+                return View(expense);
+            }
+            catch
+            {
+                return RedirectToAction("Error");
+            }
         }
 
         return View();
@@ -83,24 +111,48 @@ public class HomeController : Controller
 
     public IActionResult CreateEditExpenseForm(Expense model)
     {
-        try
-        {
-            string connectionString = "Data Source=(localdb)\\mvclocaldb;Initial Catalog=ExpensesDB";
+        if (model.Id != 0) {
+            try
+            {
+                string connectionString = "Data Source=(localdb)\\mvclocaldb;Initial Catalog=ExpensesDB";
 
-            string sqlQuery = "INSERT INTO dbo.Expenses (ExpenseValue, ExpenseDescription) VALUES (" + "'" + model.Value + "','" + model.Description + "'" + ")";
+                string sqlQuery = $"UPDATE dbo.Expenses SET ExpenseValue = '{model.Value}', ExpenseDescription = '{model.Description}' WHERE ExpenseID = {model.Id}";
 
-            SqlConnection con = new SqlConnection(connectionString);
+                SqlConnection con = new SqlConnection(connectionString);
 
-            con.Open();
-            SqlCommand sc = new SqlCommand(sqlQuery, con);
-            sc.ExecuteNonQuery();
-            con.Close();
+                con.Open();
+                SqlCommand sc = new SqlCommand(sqlQuery, con);
+                sc.ExecuteNonQuery();
+                con.Close();
 
-            return RedirectToAction("Expenses");
+                return RedirectToAction("Expenses");
+            }
+            catch
+            {
+                return RedirectToAction("Error");
+            }
         }
-        catch
+        else
         {
-            return RedirectToAction("Error");
+            try
+            {
+                string connectionString = "Data Source=(localdb)\\mvclocaldb;Initial Catalog=ExpensesDB";
+
+                string sqlQuery = $"INSERT INTO dbo.Expenses (ExpenseValue, ExpenseDescription) VALUES ('{model.Value}', '{model.Description}')";
+
+                SqlConnection con = new SqlConnection(connectionString);
+
+                con.Open();
+                SqlCommand sc = new SqlCommand(sqlQuery, con);
+                sc.ExecuteNonQuery();
+                con.Close();
+
+                return RedirectToAction("Expenses");
+            }
+            catch
+            {
+                return RedirectToAction("Error");
+            }
         }
     }
 
