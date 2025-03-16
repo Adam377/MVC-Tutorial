@@ -99,6 +99,11 @@ public class HomeController : Controller
         }
     }
 
+    public IActionResult ShowModal()
+    {
+        return PartialView("~/Views/Home/Popup.cshtml");
+    }
+
     public IActionResult Privacy()
     {
         return View();
