@@ -49,6 +49,14 @@ public class HomeController : Controller
 
         con.Close();
 
+        decimal totalExpenses = 0;
+        foreach(Expense e in allExpenses)
+        {
+            totalExpenses += e.Value;
+        }
+
+        ViewBag.Expenses = totalExpenses;
+
         return View(allExpenses);
     }
 
